@@ -210,8 +210,8 @@ def home_redirect():
 
 @routes.route('/landing')
 def landing():
-    # Show all tools (disabled ones will be handled in template)
-    active_tools = TOOLS_DATA
+    # Filter tools: Only show tools if 'condition' is True or not present
+    active_tools = [t for t in TOOLS_DATA if t.get('condition', True)]
     
     return render_template(
         'landing/landing.html',

@@ -1,5 +1,7 @@
 # DevOps Tools Hub
 
+![DevOps Tools Hub Dashboard](docs/images/dashboard-preview.png)
+
 An **All-in-One** web application for DevOps teams and Developers, providing various utility tools, a code security scanner (SonarQube), and configuration generators in a single, modern, centralized interface.
 
 ## 🚀 Key Features
