@@ -25,7 +25,8 @@ TOOLS_DATA = [
         "icon": "bi-search",
         "color": "blue",
         "url_endpoint": "routes.repo_scan",
-        "category": "Security"
+        "category": "Security",
+        "condition": Config.ENABLE_REPO_SCANNER and bool(Config.SONAR_HOST_URL)
     },
     {
         "title": "Stirling PDF",
@@ -34,7 +35,7 @@ TOOLS_DATA = [
         "color": "red",
         "external_url": STIRLING_STUDIO_URL, # Special case
         "category": "Utilities",
-        "condition": bool(STIRLING_STUDIO_URL)
+        "condition": Config.ENABLE_STIRLING_PDF and bool(STIRLING_STUDIO_URL)
     },
     {
         "title": "Base64 Converter",
@@ -146,7 +147,8 @@ TOOLS_DATA = [
         "icon": "bi-gear-wide-connected",
         "color": "amber",
         "external_url": REPO_AUTOMATION_URL,
-        "category": "DevOps"
+        "category": "DevOps",
+        "condition": Config.ENABLE_REPO_AUTOMATION and bool(REPO_AUTOMATION_URL)
     },
     {
         "title": "File Compressor",
@@ -154,9 +156,9 @@ TOOLS_DATA = [
         "icon": "bi-file-zip",
         "color": "emerald",
         "url_endpoint": "routes.file_compressor_redirect",
-        "category": "Utilities"
-    },
-    {
+        "category": "Utilities",
+        "condition": Config.ENABLE_FILE_COMPRESSOR and bool(FILE_COMPRESSOR_URL)
+    },    {
         "title": "Chmod Calculator",
         "desc": "Hitung izin file sistem Linux.",
         "icon": "bi-key-fill",
@@ -208,8 +210,8 @@ def home_redirect():
 
 @routes.route('/landing')
 def landing():
-    # Filter tools based on condition (if any)
-    active_tools = [t for t in TOOLS_DATA if t.get('condition', True)]
+    # Show all tools (disabled ones will be handled in template)
+    active_tools = TOOLS_DATA
     
     return render_template(
         'landing/landing.html',

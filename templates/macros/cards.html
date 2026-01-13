@@ -1,13 +1,24 @@
 {% macro tool_card(tool) %}
-{% set href = tool.external_url if tool.external_url else url_for(tool.url_endpoint) %}
-{% set target = '_blank' if tool.external_url else '_self' %}
-{% set rel = 'noopener noreferrer' if tool.external_url else '' %}
+{% set is_enabled = tool.get('condition', True) %}
+{% if is_enabled %}
+    {% set href = tool.external_url if tool.external_url else url_for(tool.url_endpoint) %}
+    {% set target = '_blank' if tool.external_url else '_self' %}
+    {% set rel = 'noopener noreferrer' if tool.external_url else '' %}
+    {% set extra_classes = 'hover:shadow-xl hover:-translate-y-1' %}
+    {% set icon_classes = 'bg-' ~ tool.color ~ '-100 text-' ~ tool.color ~ '-600 group-hover:bg-' ~ tool.color ~ '-600 group-hover:text-white' %}
+{% else %}
+    {% set href = 'javascript:void(0)' %}
+    {% set target = '' %}
+    {% set rel = '' %}
+    {% set extra_classes = 'cursor-not-allowed opacity-60 grayscale bg-gray-50 dark:bg-slate-800/30' %}
+    {% set icon_classes = 'bg-gray-200 text-gray-400 dark:bg-slate-700 dark:text-gray-500' %}
+{% endif %}
 
 <a href="{{ href }}" target="{{ target }}" rel="{{ rel }}" 
    data-category="{{ tool.category|lower }}" data-title="{{ tool.title|lower }}"
-   class="tool-card group block p-6 rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
+   class="tool-card group block p-6 rounded-xl shadow-md {{ extra_classes }} transition-all duration-300 relative overflow-hidden">
   
-  <div class="flex items-center justify-center w-12 h-12 bg-{{ tool.color }}-100 text-{{ tool.color }}-600 rounded-full mx-auto mb-4 group-hover:bg-{{ tool.color }}-600 group-hover:text-white transition-colors">
+  <div class="flex items-center justify-center w-12 h-12 {{ icon_classes }} rounded-full mx-auto mb-4 transition-colors">
     <i class="bi {{ tool.icon }} text-2xl"></i>
   </div>
   
@@ -18,5 +29,14 @@
   <span class="absolute top-3 right-3 text-[10px] font-bold px-2 py-1 rounded bg-slate-100 dark:bg-slate-700 text-slate-500 uppercase tracking-wide opacity-0 group-hover:opacity-100 transition-opacity">
     {{ tool.category }}
   </span>
+
+  {% if not is_enabled %}
+  <!-- Disabled Overlay/Tooltip -->
+  <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-white/50 dark:bg-black/50 backdrop-blur-[1px]">
+     <span class="bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
+        Not Configured
+     </span>
+  </div>
+  {% endif %}
 </a>
 {% endmacro %}

@@ -10,25 +10,19 @@ An **All-in-One** web application for DevOps teams and Developers, providing var
 *   **Password & Hash Generator**: Instantly generate strong passwords and hashes (MD5, SHA256, Bcrypt).
 
 ### 🛠️ Developer Utilities
-*   **Diff Checker**: Compare two text/code blocks to see line-by-line and character-level differences.
-*   **Formatters**: JSON Beautifier, SQL Formatter.
-*   **Converters**: Base64 Encoder/Decoder, Time Converter (Unix/Epoch), YAML to JSON, JSON to Go Struct.
-*   **Calculators**: IP Calculator (Subnetting), Chmod Calculator (Unix Permissions).
+*   **Diff Checker**: Compare two text/code blocks to see differences.
+*   **Formatters**: JSON Beautifier, SQL Formatter, YAML Linter.
+*   **Converters**: Base64, URL Encoder, Time Converter, JSON to Go/C/SQL/YAML.
+*   **Calculators**: IP Calculator (Subnetting), Chmod Calculator.
 
-### ⚙️ Automation Generators
-*   **Crontab Generator**: Visual UI to create cron schedule expressions.
-*   **Dockerfile Generator**: Basic templates for various programming languages.
+### ⚙️ Automation & DevOps
+*   **Repo Automation Setup**: Redirect to external tools for workflow & Helm automation.
+*   **Dockerfile Generator**: Generate optimized Dockerfiles for various stacks.
+*   **Crontab Generator**: Visual schedule builder.
 
-## 📋 Prerequisites
+## 📦 Installation & Deployment
 
-Before starting, ensure you have:
-*   **Python 3.10+** (for manual deployment)
-*   **Docker & Docker Compose** (optional, for containerized deployment)
-*   Access to a **SonarQube** server (if you intend to use the Repo Scanner feature)
-
-## 📦 Installation & Usage
-
-### Option 1: Using Docker (Recommended)
+### Using Podman / Docker (Recommended)
 
 1.  **Clone Repository**
     ```bash
@@ -37,83 +31,72 @@ Before starting, ensure you have:
     ```
 
 2.  **Configure Environment**
-    Copy the example file `.env-example` to `.env`:
     ```bash
     cp .env-example .env
+    # Edit .env and adjust values
     ```
-    Edit the `.env` file and adjust the values (see configuration guide below).
 
-3.  **Build & Run**
+3.  **Build and Run (Podman)**
     ```bash
-    docker build -t devops-tools-hub .
-        docker run -d -p 5000:5000 --env-file .env --name devops-hub devops-tools-hub
-        ```
-        Access the application at `http://localhost:5000`.
-    
-    ### Option 2: Manual Installation (Local)
-    
-    1.  **Setup Virtual Environment**
-        ```bash
-        python -m venv venv
+    # Build image
+    podman build -t devops-tools-hub .
+
+    # Run container (with volume for screenshots)
+    podman run -d \
+      --name devops-tools-hub \
+      -p 5000:5000 \
+      --env-file .env \
+      -v "$(pwd)/static/screenshots:/app/static/screenshots" \
+      devops-tools-hub
+    ```
+
+4.  **Build and Run (Docker Compose)**
+    ```bash
+    docker-compose up -d --build
+    ```
+
+### Manual Installation (Local)
+1.  **Setup Environment**
+    ```bash
+    python -m venv venv
     source venv/bin/activate  # Windows: venv\Scripts\activate
-    ```
-
-2.  **Install Dependencies**
-    ```bash
     pip install -r requirements.txt
     ```
-
-3.  **Run Application**
-    Ensure `.env` is configured.
+2.  **Run**
     ```bash
     python run.py
     ```
 
-## 🔧 Configuration (.env)
+## 🔧 White Labeling & Customization
 
-The application is highly flexible and configured via *Environment Variables*.
+The application supports full white-labeling via `.env` without modifying the source code.
 
-| Variable | Required? | Description | Default |
-| :--- | :---: | :--- | :--- |
-| `FLASK_SECRET_KEY` | **YES** | Secret key for sessions & security. | - |
-| `SONAR_HOST_URL` | No | SonarQube Server URL (for scanner). | - |
-| `SONAR_LOGIN_TOKEN`| No | SonarQube Authentication Token. | - |
-| `APP_TITLE` | No | App title in header/browser tab. | DevOps Tools Hub |
-| `APP_LOGO` | No | App logo URL/Path. | `/static/images/logo.png` |
-| `GITHUB_ACCESS_PASSWORD` | No | Password for accessing critical GitHub tools. | - |
-| `GITHUB_TOKEN` | No | GitHub Personal Access Token (Alternative to .netrc). | - |
+### 🎨 Identity
+*   **App Title**: `APP_TITLE="Your Hub Name"`
+*   **Description**: `APP_DESCRIPTION="Internal portal for engineering"`
+*   **Logo**: Change `APP_LOGO` to a URL or local path (e.g., `/static/images/logo.svg`).
+*   **Favicon**: Change `APP_FAVICON`.
 
-## Installation & Setup
+### 🎛️ Feature Toggles
+You can dynamically show/hide or enable/disable specific integrated tools:
+*   `ENABLE_REPO_SCANNER=true/false`
+*   `ENABLE_STIRLING_PDF=true/false`
+*   `ENABLE_REPO_AUTOMATION=true/false`
+*   `ENABLE_FILE_COMPRESSOR=true/false`
 
-You can change the application's look and feel to match your company branding without touching the code.
+*Note: Tools that require an external URL will also check if that URL is configured before appearing active.*
 
-### 1. Changing Name & Description
-Simply modify the following variables in your `.env` file:
-```env
-APP_TITLE="My Company Tools"
-APP_DESCRIPTION="Internal Tools for Engineering Team"
-```
+## 📖 Configuration Guide (.env)
 
-### 2. Changing Logo
-There are two ways to change the logo:
-
-**Method A: Replace File (Easiest)**
-Overwrite the existing images in the `static/images/` folder:
-*   `static/images/logo.png`: Main logo (recommended height: 40-60px).
-*   `static/images/favicon.png`: Browser tab icon.
-
-**Method B: Custom URL/Path**
-Host your logo anywhere or place it in static, then update `.env`:
-```env
-APP_LOGO="https://your-company.com/logo.png"
-# Or a local path
-APP_LOGO="/static/custom-logo.svg"
-```
-
-## 🤝 Contributing
-
-Contributions are welcome! Please create a *Pull Request* for new features, bug fixes, or documentation improvements.
+| Variable | Description | Default |
+| :--- | :--- | :--- |
+| `FLASK_SECRET_KEY` | Secret key for Flask security. | (Required) |
+| `SONAR_HOST_URL` | Your SonarQube server URL. | - |
+| `SONAR_LOGIN_TOKEN` | Token for Sonar scanner. | - |
+| `REPO_AUTOMATION_FE_URL`| External URL for automation tool. | - |
+| `STIRLING_STUDIO_URL` | URL for PDF manipulation tool. | - |
+| `GITHUB_TOKEN` | GitHub PAT for API access. | - |
+| `LOG_LEVEL` | Logging verbosity (DEBUG, INFO).| INFO |
 
 ## 📄 License
-
-This project is distributed under the MIT License. See `LICENSE` for more details.
+This project is distributed under the MIT License.

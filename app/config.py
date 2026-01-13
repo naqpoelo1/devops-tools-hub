@@ -13,7 +13,7 @@ class Config:
     # UI Customization
     APP_TITLE = os.getenv("APP_TITLE", "DevOps Tools Hub")
     APP_LOGO = os.getenv("APP_LOGO", "/static/images/logo.png")
-    APP_FAVICON = os.getenv("APP_FAVICON", "/static/images/favicon.png")
+    APP_FAVICON = os.getenv("APP_FAVICON", "/static/images/favicon.svg")
     APP_DESCRIPTION = os.getenv("APP_DESCRIPTION", "Platform terpusat untuk automasi, monitoring, keamanan, dan utilitas developer.")
     
     # SonarQube Scanner Configs
@@ -50,10 +50,34 @@ class Config:
     # GitHub API Token (Optional, alternative to .netrc)
     GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
+    # Feature Toggles
+    ENABLE_REPO_SCANNER = os.getenv("ENABLE_REPO_SCANNER", "true").lower() in {"1", "true", "yes", "on"}
+    ENABLE_STIRLING_PDF = os.getenv("ENABLE_STIRLING_PDF", "true").lower() in {"1", "true", "yes", "on"}
+    ENABLE_REPO_AUTOMATION = os.getenv("ENABLE_REPO_AUTOMATION", "true").lower() in {"1", "true", "yes", "on"}
+    ENABLE_FILE_COMPRESSOR = os.getenv("ENABLE_FILE_COMPRESSOR", "true").lower() in {"1", "true", "yes", "on"}
+
     @classmethod
     def validate(cls):
         """Simple check to ensure mandatory configs are present."""
+        missing_configs = []
+        
         if not cls.SECRET_KEY:
-            raise RuntimeError("FLASK_SECRET_KEY is missing!")
-        if not cls.SONAR_HOST_URL:
-            print("Warning: SONAR_HOST_URL is not set. Repo Scanner will fail.")
+            print("WARNING: FLASK_SECRET_KEY is missing! Using a random temporary key. Sessions will be lost on restart.")
+            cls.SECRET_KEY = os.urandom(24).hex()
+            missing_configs.append("FLASK_SECRET_KEY")
+
+        if cls.ENABLE_REPO_SCANNER and not cls.SONAR_HOST_URL:
+            missing_configs.append("SONAR_HOST_URL")
+            
+        if cls.ENABLE_REPO_AUTOMATION and not cls.REPO_AUTOMATION_FE_URL:
+            missing_configs.append("REPO_AUTOMATION_FE_URL")
+            
+        if cls.ENABLE_FILE_COMPRESSOR and not cls.FILE_COMPRESSOR_URL:
+            missing_configs.append("FILE_COMPRESSOR_URL")
+            
+        if cls.ENABLE_STIRLING_PDF and not cls.STIRLING_STUDIO_URL:
+            missing_configs.append("STIRLING_STUDIO_URL")
+
+        if missing_configs:
+            print(f"\n[CONFIG WARNING] The following configurations are missing in .env: {', '.join(missing_configs)}")
+            print("Some features will be disabled or hidden in the UI.\n")

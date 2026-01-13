@@ -7,7 +7,7 @@
   
   <script src="{{ url_for('static', filename='js/tailwind-latest.js') }}" crossorigin="anonymous"></script>
   
-  <link rel="icon" type="image/png" href="{{ config.APP_FAVICON }}">
+  <link rel="icon" type="image/svg+xml" href="{{ config.APP_FAVICON }}">
   <link href="{{ url_for('static', filename='css/bootstrap-icons.min.css') }}" rel="stylesheet" />
 
   <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
@@ -51,11 +51,13 @@
   </div>
 
   <div class="container mx-auto px-4 py-12 text-center">
-    <header class="mb-10">
+    <header class="mb-16">
       <img src="{{ config.APP_LOGO }}"
-           alt="DevOps Logo" class="w-32 h-auto mx-auto mb-6 drop-shadow-sm">
-      <h1 class="text-3xl md:text-4xl font-extrabold mb-3 tracking-tight">{{ config.APP_TITLE }}</h1>
-      <p class="text-lg opacity-70 max-w-2xl mx-auto">{{ config.APP_DESCRIPTION }}</p>
+           alt="DevOps Logo" class="w-full max-w-xs md:max-w-sm h-auto mx-auto mb-2 drop-shadow-2xl">
+      
+      <h1 class="sr-only">{{ config.APP_TITLE }}</h1>
+      
+      <p class="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto mt-4 font-light">{{ config.APP_DESCRIPTION }}</p>
 
       <!-- Search & Filter Section -->
       <div class="mt-8 max-w-xl mx-auto">
@@ -75,6 +77,23 @@
         </div>
       </div>
     </header>
+
+    {% if not config.SONAR_HOST_URL or not config.REPO_AUTOMATION_FE_URL or not config.FILE_COMPRESSOR_URL %}
+    <div class="max-w-4xl mx-auto mb-8 p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg text-yellow-800 dark:text-yellow-200 text-sm text-left">
+      <div class="flex items-start">
+        <i class="bi bi-exclamation-triangle-fill mr-3 text-xl"></i>
+        <div>
+          <h4 class="font-bold mb-1">Configuration Warning</h4>
+          <p>Some tools are hidden or disabled because the required environment variables are missing in <code>.env</code>:</p>
+          <ul class="list-disc list-inside mt-2 opacity-80">
+            {% if not config.SONAR_HOST_URL %}<li><code>SONAR_HOST_URL</code> (Repo Scanner)</li>{% endif %}
+            {% if not config.REPO_AUTOMATION_FE_URL %}<li><code>REPO_AUTOMATION_FE_URL</code> (Repo Automation)</li>{% endif %}
+            {% if not config.FILE_COMPRESSOR_URL %}<li><code>FILE_COMPRESSOR_URL</code> (File Compressor)</li>{% endif %}
+          </ul>
+        </div>
+      </div>
+    </div>
+    {% endif %}
 
     {% from 'macros/cards.html' import tool_card %}
 
