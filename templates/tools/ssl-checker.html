@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SSL Security Checker</title>
+  
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
+
+  <script src="{{ url_for('static', filename='js/tailwind-latest.js') }}" crossorigin="anonymous"></script>
+  <link href="{{ url_for('static', filename='css/bootstrap-icons.min.css') }}" rel="stylesheet" />
+  
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+  <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+
+  <style>
+    body { background-color: var(--bg); color: var(--text); transition: .3s; }
+    .main-card { background-color: var(--panel); border: 1px solid var(--border); }
+    .input-field { background-color: var(--bg); border: 1px solid var(--border); color: var(--text); }
+    
+    /* Grade Badge Styles */
+    .grade-badge {
+        width: 120px; height: 120px;
+        display: flex; align-items: center; justify-content: center;
+        border-radius: 50%;
+        font-size: 4rem; font-weight: 800;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+    .grade-A { background: #10b981; color: white; border: 4px solid #059669; }
+    .grade-B { background: #3b82f6; color: white; border: 4px solid #2563eb; }
+    .grade-C { background: #f59e0b; color: white; border: 4px solid #d97706; }
+    .grade-D { background: #f97316; color: white; border: 4px solid #ea580c; }
+    .grade-F { background: #ef4444; color: white; border: 4px solid #dc2626; }
+    
+    .spinner {
+        border: 4px solid rgba(0,0,0,0.1); width: 36px; height: 36px; border-radius: 50%;
+        border-left-color: #3b82f6; animation: spin 1s linear infinite;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 font-sans">
+
+  <div class="container mx-auto max-w-4xl">
+    
+    <header class="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
+      <div>
+        <h1 class="text-3xl md:text-4xl font-bold flex items-center gap-2">
+            <i class="bi bi-shield-check text-emerald-500"></i> SSL Checker
+        </h1>
+        <p class="mt-1 opacity-70">Analyze SSL/TLS security, validity, and server configuration rating.</p>
+      </div>
+      
+      <div class="flex gap-2">
+         <button id="btnTheme" class="px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--muted)] hover:text-[var(--text)] transition">🌞 Light</button>
+         <a href="{{ url_for('routes.landing') }}" class="px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--muted)] hover:text-[var(--text)] flex items-center gap-2 transition">
+           <i class="bi bi-arrow-left"></i> Back
+         </a>
+      </div>
+    </header>
+
+    <!-- Form Input -->
+    <div class="main-card rounded-xl shadow-lg p-6 mb-6">
+      <div class="flex flex-col md:flex-row gap-4">
+        <div class="flex-1">
+            <label class="block font-bold mb-2 opacity-80">Hostname / Domain</label>
+            <input type="text" id="domainInput" placeholder="example.com" class="input-field w-full p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+        <div class="flex items-end">
+            <button id="btnCheck" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-bold shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2">
+                <span id="btnText">Analyze</span>
+                <div id="loadingSpinner" class="spinner hidden" style="width: 20px; height: 20px; border-width: 2px;"></div>
+            </button>
+        </div>
+      </div>
+      <p class="text-sm opacity-60 mt-2"><i class="bi bi-info-circle"></i> Enter domain without https:// (e.g. google.com, api.github.com)</p>
+    </div>
+
+    <!-- Result Container -->
+    <div id="resultContainer" class="hidden space-y-6">
+        
+        <!-- Summary Card -->
+        <div class="main-card rounded-xl shadow-lg p-8 flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
+            <div id="gradeBadge" class="grade-badge grade-F shrink-0">
+                -
+            </div>
+            <div class="flex-1">
+                <h2 id="resHostname" class="text-2xl font-bold mb-1">domain.com</h2>
+                <div id="resStatus" class="inline-block px-3 py-1 rounded-full text-sm font-bold bg-gray-200 text-gray-700 mb-4">Unknown</div>
+                
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <span class="block opacity-60">Expires In</span>
+                        <span id="resDaysLeft" class="text-xl font-bold">- Days</span>
+                    </div>
+                    <div>
+                        <span class="block opacity-60">Issuer</span>
+                        <span id="resIssuer" class="font-bold truncate max-w-[150px]">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Details Grid -->
+        <div class="grid md:grid-cols-2 gap-6">
+            <!-- Technical Info -->
+            <div class="main-card rounded-xl shadow p-6">
+                <h3 class="font-bold text-lg mb-4 flex items-center gap-2"><i class="bi bi-cpu"></i> Technical Info</h3>
+                <ul class="space-y-3 text-sm">
+                    <li class="flex justify-between border-b border-[var(--border)] pb-2">
+                        <span class="opacity-70">TLS Protocol</span>
+                        <span id="resProtocol" class="font-mono font-bold">TLSv1.x</span>
+                    </li>
+                    <li class="flex justify-between border-b border-[var(--border)] pb-2">
+                        <span class="opacity-70">Cipher Suite</span>
+                        <span id="resCipher" class="font-mono text-xs break-all text-right ml-4">-</span>
+                    </li>
+                    <li class="flex justify-between border-b border-[var(--border)] pb-2">
+                        <span class="opacity-70">Encryption (Bits)</span>
+                        <span id="resBits" class="font-mono font-bold">-</span>
+                    </li>
+                    <li class="flex justify-between pt-2">
+                        <span class="opacity-70">Serial Number</span>
+                        <span id="resSerial" class="font-mono text-xs truncate max-w-[120px]" title="">-</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Validation Info -->
+            <div class="main-card rounded-xl shadow p-6">
+                 <h3 class="font-bold text-lg mb-4 flex items-center gap-2"><i class="bi bi-patch-check"></i> Validation</h3>
+                 <div id="validityBox" class="p-4 rounded-lg bg-red-50 text-red-700 border border-red-200 mb-4">
+                    <i class="bi bi-x-circle-fill mr-2"></i> <span id="validityText">Invalid Certificate</span>
+                 </div>
+                 
+                 <div class="text-sm">
+                    <p class="font-semibold mb-2 opacity-80">Subject Alternative Names (SANs):</p>
+                    <div id="resSans" class="flex flex-wrap gap-2">
+                        <!-- badges generated via js -->
+                    </div>
+                 </div>
+            </div>
+
+            <!-- Security Headers Info (NEW) -->
+            <div class="main-card rounded-xl shadow p-6 md:col-span-2">
+                 <h3 class="font-bold text-lg mb-4 flex items-center gap-2"><i class="bi bi-shield-lock"></i> HTTP Security Headers</h3>
+                 <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-[var(--bg)] text-[var(--muted)] uppercase text-xs">
+                            <tr>
+                                <th class="px-4 py-3 rounded-l-lg">Header</th>
+                                <th class="px-4 py-3">Status</th>
+                                <th class="px-4 py-3 rounded-r-lg">Value / Note</th>
+                            </tr>
+                        </thead>
+                        <tbody id="headersTableBody">
+                            <!-- JS populated -->
+                        </tbody>
+                    </table>
+                 </div>
+            </div>
+        </div>
+
+    </div> <!-- End Result Container -->
+    
+    <!-- Error Box -->
+    <div id="errorBox" class="hidden mt-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+        <strong class="font-bold">Error!</strong>
+        <span class="block sm:inline" id="errorMsg">Something went wrong.</span>
+    </div>
+
+  </div>
+
+  <script src="{{ url_for('static', filename='js/axios.min.js') }}"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const btnCheck = document.getElementById('btnCheck');
+        const domainInput = document.getElementById('domainInput');
+        const spinner = document.getElementById('loadingSpinner');
+        const btnText = document.getElementById('btnText');
+        const resultContainer = document.getElementById('resultContainer');
+        const errorBox = document.getElementById('errorBox');
+        
+        // Output Elements
+        const elGrade = document.getElementById('gradeBadge');
+        const elHostname = document.getElementById('resHostname');
+        const elStatus = document.getElementById('resStatus');
+        const elDays = document.getElementById('resDaysLeft');
+        const elIssuer = document.getElementById('resIssuer');
+        const elProtocol = document.getElementById('resProtocol');
+        const elCipher = document.getElementById('resCipher');
+        const elBits = document.getElementById('resBits');
+        const elSerial = document.getElementById('resSerial');
+        const elValidityBox = document.getElementById('validityBox');
+        const elValidityText = document.getElementById('validityText');
+        const elSans = document.getElementById('resSans');
+
+        btnCheck.addEventListener('click', async () => {
+            const domain = domainInput.value.trim();
+            if(!domain) return;
+
+            // UI Reset
+            resultContainer.classList.add('hidden');
+            errorBox.classList.add('hidden');
+            spinner.classList.remove('hidden');
+            btnText.textContent = 'Processing...';
+            btnCheck.disabled = true;
+
+            try {
+                const response = await axios.post("{{ url_for('routes.ssl_checker_api') }}", { domain: domain });
+                const data = response.data;
+
+                if(data.success) {
+                    const r = data.result;
+                    const d = r.details;
+
+                    // 1. Header
+                    elHostname.textContent = r.hostname;
+                    elGrade.textContent = r.grade;
+                    elGrade.className = `grade-badge grade-${r.grade}`;
+                    
+                    if(r.valid) {
+                        elStatus.className = "inline-block px-3 py-1 rounded-full text-sm font-bold bg-emerald-100 text-emerald-700 mb-4";
+                        elStatus.innerHTML = '<i class="bi bi-check-circle"></i> Valid';
+                        
+                        elValidityBox.className = "p-4 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 mb-4";
+                        elValidityText.innerHTML = '<i class="bi bi-check-circle-fill mr-2"></i> Valid & Trusted Certificate';
+                    } else {
+                        elStatus.className = "inline-block px-3 py-1 rounded-full text-sm font-bold bg-red-100 text-red-700 mb-4";
+                        elStatus.innerHTML = '<i class="bi bi-x-circle"></i> Invalid';
+
+                        elValidityBox.className = "p-4 rounded-lg bg-red-50 text-red-700 border border-red-200 mb-4";
+                        elValidityText.innerHTML = '<i class="bi bi-x-circle-fill mr-2"></i> ';
+                        elValidityText.appendChild(document.createTextNode(r.error || 'Certificate Issue'));
+                    }
+
+                    // 2. Info
+                    elDays.textContent = `${d.days_left} Days`;
+                    if(d.days_left < 30) elDays.classList.add('text-red-500');
+                    else elDays.classList.remove('text-red-500');
+
+                    elIssuer.textContent = d.issuer;
+                    
+                    // 3. Technical
+                    elProtocol.textContent = d.protocol;
+                    elCipher.textContent = d.cipher_name;
+                    elBits.textContent = `${d.cipher_bits} bit`;
+                    elSerial.textContent = d.serial_number;
+                    elSerial.title = d.serial_number;
+
+                    // 4. SANs
+                    elSans.innerHTML = '';
+                    if(d.sans && d.sans.length > 0){
+                        d.sans.forEach(san => {
+                            const badge = document.createElement('span');
+                            badge.className = "px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs border border-gray-200";
+                            badge.textContent = san;
+                            elSans.appendChild(badge);
+                        });
+                    } else {
+                         elSans.innerHTML = '<span class="opacity-50 italic">None</span>';
+                    }
+
+                    // 5. Security Headers (NEW)
+                    const tbody = document.getElementById('headersTableBody');
+                    tbody.innerHTML = '';
+                    if (r.headers && r.headers.details) {
+                        r.headers.details.forEach(h => {
+                            const tr = document.createElement('tr');
+                            tr.className = "border-b border-[var(--border)] last:border-0";
+                            
+                            let statusIcon = '';
+                            let statusClass = '';
+                            let valText = h.value ? h.value : '-'; // Don't truncate
+
+                            if (h.status === 'good') {
+                                statusIcon = '<i class="bi bi-check-circle-fill text-emerald-500"></i>';
+                                statusClass = 'text-emerald-600 font-bold';
+                                if (!h.value) valText = 'Not Present (Secure)';
+                            } else if (h.status === 'warning') {
+                                statusIcon = '<i class="bi bi-exclamation-triangle-fill text-orange-500"></i>';
+                                statusClass = 'text-orange-600 font-bold';
+                            } else { // missing
+                                statusIcon = '<i class="bi bi-x-circle-fill text-red-500"></i>';
+                                statusClass = 'text-red-600 font-bold';
+                                valText = 'Missing';
+                            }
+
+                            tr.innerHTML = `
+                                <td class="px-4 py-3 font-medium min-w-[150px]">${h.name} <div class="text-[10px] opacity-60 font-mono">${h.header}</div></td>
+                                <td class="px-4 py-3 ${statusClass} flex items-center gap-2 whitespace-nowrap">${statusIcon} <span class="uppercase text-xs">${h.status}</span></td>
+                                <td class="px-4 py-3 font-mono text-xs opacity-80 break-all" title="${h.value || ''}">${valText}</td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                    }
+
+                    resultContainer.classList.remove('hidden');
+                } else {
+                    throw new Error(data.error);
+                }
+
+            } catch (err) {
+                errorBox.classList.remove('hidden');
+                const msg = err.response?.data?.error || err.message || "Failed to contact server.";
+                document.getElementById('errorMsg').textContent = msg;
+            } finally {
+                spinner.classList.add('hidden');
+                btnText.textContent = 'Analyze';
+                btnCheck.disabled = false;
+            }
+        });
+        
+        // Enter key support
+        domainInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') btnCheck.click();
+        });
+    });
+  </script>
+</body>
+</html>

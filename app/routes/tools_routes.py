@@ -3,6 +3,7 @@ from flask import render_template, request, redirect, url_for, jsonify, current_
 from app import csrf
 from app.routes import routes  # gunakan Blueprint yang sama
 from app.utils.linter_service import run_yaml_linting, auto_fix_yaml
+from app.utils.ssl_service import get_ssl_details
 from app.config import Config
 
 def _clean_url(value: str | None) -> str | None:
@@ -60,6 +61,14 @@ TOOLS_DATA = [
         "color": "amber",
         "url_endpoint": "routes.json_formatter",
         "category": "Developer"
+    },
+    {
+        "title": "SSL Checker",
+        "desc": "Analyze SSL/TLS security, expiry date, and grade.",
+        "icon": "bi-shield-check",
+        "color": "emerald",
+        "url_endpoint": "routes.ssl_checker",
+        "category": "Security"
     },
     {
         "title": "Diff Checker",
@@ -273,6 +282,30 @@ def sql_formatter():
 @routes.route("/tools/html-viewer")
 def html_viewer():
     return render_template("tools/html-viewer.html")
+
+##########################################
+#           SSL Checker Tool             #
+##########################################
+
+@routes.route("/ssl-checker")
+def ssl_checker():
+    return render_template("tools/ssl-checker.html")
+
+@routes.route("/api/tools/ssl-check", methods=["POST"])
+@csrf.exempt
+def ssl_checker_api():
+    data = request.json
+    domain = data.get("domain")
+    if not domain:
+        return jsonify({"success": False, "error": "Domain is required"}), 400
+    
+    result = get_ssl_details(domain)
+    
+    # If there's a fatal error (DNS/Timeout), return success=False so UI knows
+    if result.get("error") and not result.get("details"):
+        return jsonify({"success": False, "error": result["error"]}), 400
+        
+    return jsonify({"success": True, "result": result})
 
 ##########################################
 #           Redirect Tools               #

@@ -2,31 +2,58 @@
 
 ![DevOps Tools Hub Dashboard](docs/images/dashboard-preview.png)
 
-An **All-in-One** web application for DevOps teams and Developers, providing various utility tools, a code security scanner (SonarQube), and configuration generators in a single, modern, centralized interface.
+A comprehensive, **All-in-One** web application designed for DevOps Engineers and Developers. This platform centralizes essential utilities, security scanners, and automation tools into a single, modern interface, streamlining your daily workflows.
 
-## 🚀 Key Features
+## ✨ Key Features
 
-### 🛡️ Security & Code Quality
-*   **Repo Scanner**: Graphical interface to run SonarQube Scanner on Git repositories. Supports parameter customization (*exclusions, inclusions, branch*).
-*   **GitHub Access Checker**: Verify user roles/permissions on specific GitHub organizations or repositories.
-*   **Password & Hash Generator**: Instantly generate strong passwords and hashes (MD5, SHA256, Bcrypt).
+### 🛡️ Security & Access
+*   **Repo Scanner (SonarQube)**: Run static code analysis on Git repositories with customizable exclusions/inclusions and quality gate checks.
+*   **SSL Checker**: Analyze SSL/TLS certificates, expiry dates, and security grades.
+*   **GitHub Access Manager**: Verify and manage user permissions/roles across GitHub repositories and organizations.
+*   **Security Utilities**:
+    *   **Password Generator**: Create strong, customizable passwords.
+    *   **Hash Generator**: Generate MD5, SHA1, SHA256, SHA512, and Bcrypt hashes.
+    *   **JWT Debugger**: Decode and inspect JSON Web Tokens (offline).
 
 ### 🛠️ Developer Utilities
-*   **Diff Checker**: Compare two text/code blocks to see differences.
-*   **Formatters**: JSON Beautifier, SQL Formatter, YAML Linter.
-*   **Converters**: Base64, URL Encoder, Time Converter, JSON to Go/C/SQL/YAML.
-*   **Calculators**: IP Calculator (Subnetting), Chmod Calculator.
+*   **Code Formatters & Linters**:
+    *   **JSON Formatter**: Beautify, minify, and validate JSON.
+    *   **SQL Formatter**: Format SQL queries for better readability.
+    *   **YAML Linter**: Validate and auto-fix YAML syntax.
+    *   **HTML Viewer**: Render and inspect HTML snippets.
+*   **Comparators**:
+    *   **Diff Checker**: Compare text or code side-by-side to identify differences.
+    *   **Regex Tester**: Test regular expressions against text patterns in real-time.
 
-### ⚙️ Automation & DevOps
-*   **Repo Automation Setup**: Redirect to external tools for workflow & Helm automation.
-*   **Dockerfile Generator**: Generate optimized Dockerfiles for various stacks.
-*   **Crontab Generator**: Visual schedule builder.
+### 🔄 Converters & Calculators
+*   **Data Converters**:
+    *   **Base64**: Encode and decode strings.
+    *   **URL Encoder**: Safe URL encoding/decoding.
+    *   **JSON Converters**: Convert JSON to Go Structs, C# Classes, SQL Schema, or YAML.
+*   **Calculators**:
+    *   **IP Calculator**: Subnetting helper (CIDR, Netmask, Broadcast).
+    *   **Chmod Calculator**: Visual permissions calculator for Linux (chmod).
+    *   **Time Converter**: Convert Epoch/Unix timestamps to human-readable dates and vice-versa.
 
-## 📦 Installation & Deployment
+### ⚙️ DevOps Automation
+*   **Dockerfile Generator**: Create optimized Dockerfiles for various language stacks (Node, Python, Go, etc.).
+*   **Crontab Generator**: Visual editor for scheduling cron jobs.
+*   **Integrations** (Optional):
+    *   **Repo Automation**: Redirect to internal workflow/helm automation tools.
+    *   **Stirling PDF**: Integration for PDF manipulation (Merge, Split, OCR).
+    *   **File Compressor**: Link to file compression microservices.
 
-### Using Podman / Docker (Recommended)
+---
 
-1.  **Clone Repository**
+## 🚀 Installation & Deployment
+
+### Prerequisites
+*   **Docker** or **Podman** (Recommended)
+*   *Alternatively*: Python 3.12+ and Node.js (for local dev)
+
+### Option A: Using Podman / Docker (Fastest)
+
+1.  **Clone the Repository**
     ```bash
     git clone https://github.com/username/devops-tools-hub.git
     cd devops-tools-hub
@@ -35,15 +62,13 @@ An **All-in-One** web application for DevOps teams and Developers, providing var
 2.  **Configure Environment**
     ```bash
     cp .env-example .env
-    # Edit .env and adjust values
+    # Edit .env to set your secrets and preferences
     ```
 
-3.  **Build and Run (Podman)**
+3.  **Build and Run**
+    *Using Podman:*
     ```bash
-    # Build image
     podman build -t devops-tools-hub .
-
-    # Run container (with volume for screenshots)
     podman run -d \
       --name devops-tools-hub \
       -p 5000:5000 \
@@ -52,53 +77,91 @@ An **All-in-One** web application for DevOps teams and Developers, providing var
       devops-tools-hub
     ```
 
-4.  **Build and Run (Docker Compose)**
+    *Using Docker Compose:*
     ```bash
     docker-compose up -d --build
     ```
 
-### Manual Installation (Local)
-1.  **Setup Environment**
+    Access the app at `http://localhost:5000`.
+
+### Option B: Manual Local Installation
+
+1.  **Set up Python Environment**
     ```bash
     python -m venv venv
-    source venv/bin/activate  # Windows: venv\Scripts\activate
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
     pip install -r requirements.txt
     ```
-2.  **Run**
+
+2.  **Install Playwright Browsers** (Required for Screenshots)
+    ```bash
+    playwright install chromium
+    ```
+
+3.  **Run the Application**
     ```bash
     python run.py
     ```
 
-## 🔧 White Labeling & Customization
+---
 
-The application supports full white-labeling via `.env` without modifying the source code.
+## 🔧 Configuration (.env)
 
-### 🎨 Identity
-*   **App Title**: `APP_TITLE="Your Hub Name"`
-*   **Description**: `APP_DESCRIPTION="Internal portal for engineering"`
-*   **Logo**: Change `APP_LOGO` to a URL or local path (e.g., `/static/images/logo.svg`).
-*   **Favicon**: Change `APP_FAVICON`.
+The application is highly configurable via environment variables.
 
-### 🎛️ Feature Toggles
-You can dynamically show/hide or enable/disable specific integrated tools:
-*   `ENABLE_REPO_SCANNER=true/false`
-*   `ENABLE_STIRLING_PDF=true/false`
-*   `ENABLE_REPO_AUTOMATION=true/false`
-*   `ENABLE_FILE_COMPRESSOR=true/false`
+### Core Settings
+| Variable | Description | Default |
+| :--- | :--- | :--- |
+| `FLASK_SECRET_KEY` | **Required**. Secret key for session security. | *Random if missing* |
+| `LOG_LEVEL` | Logging verbosity (`DEBUG`, `INFO`, `WARNING`). | `INFO` |
+| `PORT` | Port to run the Flask app on (Manual run only). | `5000` |
 
-*Note: Tools that require an external URL will also check if that URL is configured before appearing active.*
+### SonarQube Scanner
+| Variable | Description |
+| :--- | :--- |
+| `SONAR_HOST_URL` | URL of your SonarQube server. |
+| `SONAR_LOGIN_TOKEN` | Authentication token for the scanner. |
+| `SONAR_EXCLUSIONS` | Default file patterns to exclude from scans. |
 
-## 📖 Configuration Guide (.env)
+### Feature Toggles & Integrations
+Enable or disable specific features to tailor the hub to your needs.
 
 | Variable | Description | Default |
 | :--- | :--- | :--- |
-| `FLASK_SECRET_KEY` | Secret key for Flask security. | (Required) |
-| `SONAR_HOST_URL` | Your SonarQube server URL. | - |
-| `SONAR_LOGIN_TOKEN` | Token for Sonar scanner. | - |
-| `REPO_AUTOMATION_FE_URL`| External URL for automation tool. | - |
-| `STIRLING_STUDIO_URL` | URL for PDF manipulation tool. | - |
-| `GITHUB_TOKEN` | GitHub PAT for API access. | - |
-| `LOG_LEVEL` | Logging verbosity (DEBUG, INFO).| INFO |
+| `ENABLE_REPO_SCANNER` | Enable SonarQube scanner interface. | `true` |
+| `ENABLE_STIRLING_PDF` | Enable PDF tools link. | `true` |
+| `STIRLING_STUDIO_URL` | URL for the external Stirling PDF service. | - |
+| `ENABLE_REPO_AUTOMATION`| Enable Repo Automation link. | `true` |
+| `REPO_AUTOMATION_FE_URL`| URL for the external Automation service. | - |
+
+### UI Customization (White Labeling)
+Make the tool look like your own corporate portal.
+*   `APP_TITLE`: "My Company DevOps Hub"
+*   `APP_LOGO`: URL or path to your logo.
+*   `APP_FAVICON`: URL or path to your favicon.
+
+---
+
+## 📂 Project Structure
+
+```plaintext
+devops-tools-hub/
+├── app/
+│   ├── routes/         # Flask Route definitions (Controllers)
+│   ├── utils/          # Helper logic (Scanner, Git, Parsers)
+│   ├── tasks.py        # Background task management
+│   └── config.py       # Configuration loader
+├── static/
+│   ├── css/            # Stylesheets
+│   ├── js/             # Frontend logic
+│   └── screenshots/    # Generated scan screenshots
+├── templates/
+│   ├── tools/          # Specific tool pages
+│   └── ...
+├── Dockerfile          # Container definition
+└── run.py              # Application entry point
+```
 
 ## 📄 License
-This project is distributed under the MIT License.
+
+This project is open-source and available under the **MIT License**.
