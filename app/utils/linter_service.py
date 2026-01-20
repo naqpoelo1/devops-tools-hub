@@ -58,8 +58,9 @@ def run_yaml_linting(content: str) -> dict:
 def auto_fix_yaml(content: str) -> str:
     """
     Mencoba memperbaiki masalah umum pada konten YAML.
-    - Menambahkan '---' jika tidak ada.
-    - Memperbaiki indentasi dan format dasar.
+    - Menambahkan '---' jika tidak ada (explicit start).
+    - Memperbaiki indentasi (standard 2 spaces) dan format dasar.
+    - Mendukung multi-document YAML.
     
     Args:
         content (str): String berisi teks YAML yang akan diperbaiki.
@@ -67,20 +68,39 @@ def auto_fix_yaml(content: str) -> str:
     Returns:
         str: Konten YAML yang sudah diformat dan diperbaiki.
     """
+    if not content or not content.strip():
+        return content
+
     yaml = YAML()
+    # Konfigurasi indentasi standar:
+    # mapping=2: indentasi anak key 2 spasi
+    # sequence=4: indentasi list (dash) 4 spasi dari parent (2 spasi extra)
+    # offset=2: jarak antara dash dan kontennya
     yaml.indent(mapping=2, sequence=4, offset=2)
     yaml.preserve_quotes = True
-    
-    if not content.strip().startswith('---'):
-        content = '---\n' + content
+    yaml.explicit_start = True  # Paksa '---' di awal dokumen
+    yaml.width = 4096           # Hindari wrapping line yang tidak perlu
 
     try:
-        data = yaml.load(content)
+        # Gunakan load_all untuk mendukung multi-document (misal K8s manifests)
+        data = list(yaml.load_all(content))
+        
+        # Jika hasil load kosong (misal hanya komentar), kembalikan aslinya
+        if not data:
+            return content
+
         string_stream = io.StringIO()
-        yaml.dump(data, string_stream)
+        yaml.dump_all(data, string_stream)
         fixed_content = string_stream.getvalue()
+        
+        # ruamel.yaml kadang tidak menambahkan newline di akhir file
+        if not fixed_content.endswith('\n'):
+            fixed_content += '\n'
+            
         return fixed_content
-    except Exception:
-        # Jika gagal memperbaiki, kembalikan konten asli
-        logger.warning("Could not auto-fix YAML, returning original content.")
+
+    except Exception as e:
+        # Jika gagal memparsing (syntax fatal), kembalikan konten asli
+        # agar user bisa memperbaiki manual berdasarkan error linter.
+        logger.warning(f"Auto-fix failed (syntax error?): {e}")
         return content

@@ -147,18 +147,26 @@ Make the tool look like your own corporate portal.
 ```plaintext
 devops-tools-hub/
 ├── app/
-│   ├── routes/         # Flask Route definitions (Controllers)
-│   ├── utils/          # Helper logic (Scanner, Git, Parsers)
+│   ├── routes/         # Route definitions (Repo Scan, GitHub Access, Tools)
+│   ├── utils/          # Core logic (Git/Sonar, SSL, Linters, Validators)
+│   ├── config.py       # Configuration management (Environment variables)
 │   ├── tasks.py        # Background task management
-│   └── config.py       # Configuration loader
+│   └── __init__.py     # App factory and logging setup
 ├── static/
-│   ├── css/            # Stylesheets
-│   ├── js/             # Frontend logic
-│   └── screenshots/    # Generated scan screenshots
+│   ├── css/            # UI Styling (Bootstrap, CodeMirror, Custom)
+│   ├── js/             # Client-side scripts (Scanner, Theme, Axios)
+│   ├── images/         # Static assets (Logos, Icons)
+│   └── screenshots/    # Scan results storage (persistent volume)
 ├── templates/
-│   ├── tools/          # Specific tool pages
-│   └── ...
-├── Dockerfile          # Container definition
+│   ├── repo-scan/      # SonarQube Scanner interface
+│   ├── github-access/  # GitHub permission management
+│   ├── tools/          # Utility tool templates (Regex, SSL, etc.)
+│   ├── json-formatter/ # JSON specific transformation tools
+│   ├── layout.html     # Base layout template
+│   └── ...             # Other tool-specific folders (Crontab, Diff, etc.)
+├── Dockerfile          # Containerization configuration
+├── docker-compose.yml  # Multi-container orchestration
+├── requirements.txt    # Python dependencies
 └── run.py              # Application entry point
 ```
 
